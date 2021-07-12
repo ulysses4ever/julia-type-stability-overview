@@ -8,6 +8,7 @@
 \date{}
 
 \usepackage{amsmath,amssymb}
+\usepackage{verbatimbox}
 \usepackage{fullpage}
 \usepackage{lmodern}
 \usepackage{iftex}
@@ -70,16 +71,16 @@ minutes.
   session in the root directory. The \texttt{ls} (accordingly,
   \texttt{dir} on Windows) should show you:
 
-\begin{verbatim}
+\begin{verbnobox}[\small]
 Stability    pkgs    start    Overview.pdf    shell.nix    top-1000-pkgs.txt
-\end{verbatim}
+\end{verbnobox}
 \item
   From here, run Docker as follows:
 
 {\small
-\begin{verbatim}
+\begin{verbnobox}[\small]
 docker run --rm -it -v "$PWD":/artifact nixos/nix sh -c "cd artifact; nix-shell --pure"
-\end{verbatim}
+\end{verbnobox}
 }
 
   Note: running Docker may require root privileges. Other notes from the
@@ -89,9 +90,9 @@ docker run --rm -it -v "$PWD":/artifact nixos/nix sh -c "cd artifact; nix-shell 
   (e.g.~\texttt{ls} shows the \texttt{Stability} directory among
   others). Pull in dependencies of our code:
 
-\begin{verbatim}
+\begin{verbnobox}[\small]
 JULIA_PROJECT=Stability julia -e 'using Pkg; Pkg.instantiate()'
-\end{verbatim}
+\end{verbnobox}
 \item
   To run our type stability analysis on one simple Julia package
   \texttt{Multisets}, do the following:
@@ -101,33 +102,38 @@ JULIA_PROJECT=Stability julia -e 'using Pkg; Pkg.instantiate()'
   \item
     Enter \texttt{start} directory and process the package:
 
-\begin{verbatim}
+\begin{verbnobox}[\small]
 cd start
 ../Stability/scripts/proc_package.sh "Multisets 0.4.12"
-\end{verbatim}
+\end{verbnobox}
 
     There should be a number of new files with raw data in
     \texttt{start/Multisets},
-    e.g.~\texttt{stability-stats-per-instance.csv}.
+    e.g.
+
+\begin{verbnobox}[\small]
+stability-stats-per-instance.csv
+\end{verbnobox}
+
   \item
     Convert the raw data into a CSV file:
 
-\begin{verbatim}
+\begin{verbnobox}[\small]
 ../Stability/scripts/pkgs-report.sh
-\end{verbatim}
+\end{verbnobox}
 
     There should be a new file \texttt{start/report.csv}.
   \item
     Generate tables:
 
-\begin{verbatim}
+\begin{verbnobox}[\small]
 JULIA_PROJECT=../Stability ../Stability/scripts/tables.jl
-\end{verbatim}
+\end{verbnobox}
 
     You should see stability data about the Multisets package as an
     output:
 
-\begin{verbatim}
+\begin{verbnobox}[\small]
  Table 1
  3×3 DataFrame
   Row │ Stats      Stable   Grounded 
@@ -136,39 +142,41 @@ JULIA_PROJECT=../Stability ../Stability/scripts/tables.jl
     1 │ Mean          73.0      55.0
     2 │ Median        73.0      55.0
     3 │ Std. Dev.      0.0       0.0
+\end{verbnobox}
 
+\begin{verbnobox}[\small]
  Table 2
  1×7 DataFrame
   Row │ package    Methods  Instances  Inst/Meth  Varargs (%)  Stable (%)  Grounded (%) 
       │ String     Int64    Int64      Float64    Int64        Int64       Int64        
  ─────┼─────────────────────────────────────────────────────────────────────────────────
     1 │ Multisets        7         11        1.6            0          73            55
-\end{verbatim}
+\end{verbnobox}
 
     Note that the format is the same as Tables 1 and 2 of the paper,
     only the numbers are computed over one small package.
   \item
     Generate plots:
 
-\begin{verbatim}
+\begin{verbnobox}[\small]
 JULIA_PROJECT=../Stability julia -L ../Stability/scripts/plot.jl -e 'plot_pkg("Multisets")'
-\end{verbatim}
+\end{verbnobox}
 
     There should be a group of figures created under
     \texttt{Multisets/figs}. The ones that correspond to Figure 10 of
     the paper are
 
-\begin{verbatim}
+\begin{verbnobox}[\small]
 Multisets/figs/Multisets-size-vs-stable.pdf
 Multisets/figs/Multisets-size-vs-grounded.pdf
-\end{verbatim}
+\end{verbnobox}
 
     You should be able to browse the figures using your host system's
     PDF viewer (all files created inside Docker container under the
     \texttt{/artifact} directory will be visible in your host file
     system).\\
     The figures should be similar to ones in
-    \texttt{start/Multisets/figs-ref}.
+    \texttt{start/Multisets/figs-ref} (provided for reference).
   \end{enumerate}
 \item
   To shut down the Docker session, run \texttt{exit}.
@@ -273,22 +281,24 @@ AEC guidelines suggest mentioning expected warnings in the README.
   that appeared to be the most convenient way of gathering statistics we
   need.
 
-\begin{verbatim}
-WARNING: Method definition gen_test_code##kw(Any, typeof(Pkg.Operations.gen_test_code), String) in module Operations at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.5/Pkg/src/Operations.jl:1316 overwritten in module Stability at /home/artem/stability/repo/Stability/src/pkg-test-override.jl:6.
+\begin{verbnobox}[\small]
+WARNING: Method definition gen_test_code##kw(Any, typeof(Pkg.Operations.gen_test_code), String)
+  in module Operations at /buildworker/.../julia/stdlib/v1.5/Pkg/src/Operations.jl:1316
+  overwritten in module Stability at /artifact/Stability/src/pkg-test-override.jl:6.
   ** incremental compilation may be fatally broken for this module **
-\end{verbatim}
+\end{verbnobox}
 \item
   GNU parallel wants to be cited and prints the following message unless
   you run it dry with the \texttt{-\/-citation} flag first. It is safe
   to ignore.
 
-\begin{verbatim}
+\begin{verbnobox}[\small]
 Academic tradition requires you to cite works you base your article on.
 If you use programs that use GNU Parallel to process data for an article
 ...
 Come on: You have run parallel 13 times. Isn't it about time 
 you run 'parallel --citation' once to silence the citation notice?
-\end{verbatim}
+\end{verbnobox}
 \item
   The main body of the experiment for Tables 1 and 2 uses Julia Package
   manager to get and run tests of various Julia packages. The package
