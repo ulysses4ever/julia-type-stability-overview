@@ -55,7 +55,7 @@
 \begin{document}
 
 \hypertarget{getting-started}{%
-\subsection{Getting Started}\label{getting-started}}
+\section{Getting Started}\label{getting-started}}
 
 We show here the simplest way to (dry) run the artifact, which is via
 \href{https://docs.docker.com/get-docker/}{Docker}. The alternatives are
@@ -183,7 +183,7 @@ Multisets/figs/Multisets-size-vs-grounded.pdf
 \end{enumerate}
 
 \hypertarget{list-of-claims-from-paper-supported-by-artifact}{%
-\subsection{List of Claims From Paper Supported by
+\section{List of Claims From Paper Supported by
 Artifact}\label{list-of-claims-from-paper-supported-by-artifact}}
 
 This artifact aims for two things:
@@ -212,7 +212,7 @@ This artifact aims for two things:
 \end{itemize}
 
 \hypertarget{step-by-step-instructions}{%
-\subsection{Step By Step Instructions}\label{step-by-step-instructions}}
+\section{Step By Step Instructions}\label{step-by-step-instructions}}
 
 There are four parts to the rest of this document:
 
@@ -230,7 +230,7 @@ There are four parts to the rest of this document:
 \end{enumerate}
 
 \hypertarget{metadata}{%
-\subsubsection{Metadata}\label{metadata}}
+\subsection{Metadata}\label{metadata}}
 
 \hypertarget{hardware-and-timings}{%
 \paragraph{Hardware and Timings}\label{hardware-and-timings}}
@@ -262,7 +262,7 @@ Using that hardware we get:
 \item
   Reproducing Table 2 (10 packages): 20 mins
 \item
-  Reproducing Fig. 10 (heat maps): TODO (\textless{} 5 minutes?)
+  Reproducing Fig. 10 (heat maps): \textless{} 5 minutes
 \end{itemize}
 
 These numbers, again, are heavily dependent on the number of CPUs
@@ -314,7 +314,7 @@ you run 'parallel --citation' once to silence the citation notice?
 \end{enumerate}
 
 \hypertarget{comments-on-setting-up-environment}{%
-\subsubsection{Comments on Setting Up
+\subsection{Comments on Setting Up
 Environment}\label{comments-on-setting-up-environment}}
 
 Our artifact has modest dependencies and in theory can be tested by
@@ -343,6 +343,9 @@ of steps that get you there.
 \hypertarget{dependency-management-via-nix-and-reproducibility}{%
 \paragraph{Dependency Management via Nix and
 Reproducibility}\label{dependency-management-via-nix-and-reproducibility}}
+
+\textit{Note: if the Docker approach from Getting Started section works good for
+you, you don't have to understand this section.}
 
 To make sure the version of dependencies are the same as we used, and
 also to automate the process of getting them, we use the
@@ -386,7 +389,7 @@ configurations because Docker+Nix seems like a strictly better option.
 Note that insider Docker the commands are run under the root user. This
 makes life easier in one aspect: Julia package manager stores a lot of
 metadata and makes some of it inaccessible for cleanup in the end. This
-is no problem under reoot but if running ouside Docker and without root
+is no problem under reboot but if running outside Docker and without root
 privileges, this will eat up some disk space, proportional to the number
 of packages analyzed. For 1000 packages this can add up to hundreds of
 gigabytes. If you don't have that much disc space, run either in Docker
@@ -433,55 +436,74 @@ to succeed path is to apply both of them.
 \item
   {[}Sanity Checking{]} Make sure you have Julia and GNU parallel up:
   \texttt{julia\ -\/-version\ \&\&\ parallel\ -\/-version}.
+\item
+  Pull in dependencies of our Julia code:
+
+\begin{verbnobox}[\small]
+JULIA_PROJECT=Stability julia -e 'using Pkg; Pkg.instantiate()'
+\end{verbnobox}
 \end{enumerate}
 
 \hypertarget{reproducing-results-from-section-5}{%
-\subsubsection{Reproducing Results from Section
+\subsection{Reproducing Results from Section
 5}\label{reproducing-results-from-section-5}}
 
+As noted in the Timings section, reproducing Table 1 requires a lot of
+computational resources to analyze 1000 Julia packages. We suggest starting
+from only top 10 packages, which also provide data for Table 2. In the end of
+the section we show what you need to change to get all 1000 packages processed.
+
+Instructions below assume the environment is setup, e.g. by applying the first 3
+steps from the Getting Started section or following the discussion in the
+Comments on Setup section above.
+
 \begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\item
-  Table 2 (The 10-packages table from Section 5):
+  \def\labelenumii{\alph{enumii}.}
+  \item
+    Enter the \texttt{pkgs} directory in the root of the artifact and run analysis
+    on 10 packages:
 
-  \begin{itemize}
-  \tightlist
-  \item
-    the package list (TODO either a separate file or the 1K list +
-    enhance \texttt{proc\_package\_parallel.sh} with additional param:
-    how many packages to take)
-  \item
-    \texttt{scripts/proc\_package\_parallel.sh\ ../top-10.txt}
-  \item
-    \texttt{scripts/pkgs-report.sh}
-  \end{itemize}
+\begin{verbnobox}[\small]
+cd pkgs
+../Stability/scripts/proc_package_parallel.sh top-1000-pkgs.txt 10
+\end{verbnobox}
 
-  Output is in \texttt{report.csv} which is still not quite close to
-  Table 2, as it needs:
+    This takes 20 minutes in our fully parallel setup (\# CPUs \textgreater{}
+    10). This script runs the analysis producing the raw data per package and
+    also runs the reporting script achieving a moral equivalent of steps 4.a and
+    4.b from the Getting Started section. The resulting \texttt{report.csv}
+    in the current directory should get a new time stamp.
 
-  \begin{itemize}
-  \tightlist
   \item
-    Percentages (instead of absolute numbers) for
-    stable/grounded/varargs columns
-  \item
-    Remove nospec and (maybe?) fail column
-  \item
-    Add calculated instance per method column.
-  \end{itemize}
-\item
-  Table 1 of Sec 5 (data about 1K packages).
+    Generate both tables as before:
 
-  This should be similar to previous:
-  \texttt{proc\_package\_parallel.sh}.
-\item
-  Fig. 10 (st/gr heat map from Sec 5)
+\begin{verbnobox}[\small]
+JULIA_PROJECT=../Stability ../Stability/scripts/tables.jl
+\end{verbnobox}
 
-  \begin{itemize}
-  \tightlist
+    Table 1 will have significantly different numbers than Table 1 in the paper
+    because we analyzed only 10 packages, not 1000.
+
+    Table 2 should have mostly the same numbers as in the paper. Slight
+    differencies in several lines are due to inherent non-determinism in the
+    test suites of respective packages.
+
   \item
-    \texttt{scripts/plot.sh} ??? (TODO)
-  \end{itemize}
+    Reproducing Figure 10 of the paper:
+
+\begin{verbnobox}[\small]
+JULIA_PROJECT=../Stability julia -L ../Stability/scripts/plot.jl -e 'plot_pkg("Pluto")'
+\end{verbnobox}
+
+    There should be a group of figures created under
+    \texttt{Pluto/figs}. The ones that we have on Figure 10 are
+
+\begin{verbnobox}[\small]
+Pluto/figs/Pluto-size-vs-stable.pdf
+Pluto/figs/Pluto-size-vs-grounded.pdf
+\end{verbnobox}
+
 \end{enumerate}
+
 
 \end{document}
