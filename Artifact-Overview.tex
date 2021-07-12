@@ -8,6 +8,7 @@
 \date{}
 
 \usepackage{amsmath,amssymb}
+\usepackage{fullpage}
 \usepackage{lmodern}
 \usepackage{iftex}
 \ifPDFTeX
@@ -70,14 +71,16 @@ minutes.
   \texttt{dir} on Windows) should show you:
 
 \begin{verbatim}
-Stability    pkgs    start    README.md    shell.nix    top-1000-pkgs.txt
+Stability    pkgs    start    Overview.pdf    shell.nix    top-1000-pkgs.txt
 \end{verbatim}
 \item
   From here, run Docker as follows:
 
+{\small
 \begin{verbatim}
 docker run --rm -it -v "$PWD":/artifact nixos/nix sh -c "cd artifact; nix-shell --pure"
 \end{verbatim}
+}
 
   Note: running Docker may require root privileges. Other notes from the
   \protect\hyperlink{steps-to-setup}{Steps To Setup} section also apply.
@@ -231,14 +234,14 @@ environment on server hardware:
 
 \begin{itemize}
 \item
-  32 Intel (Skylake) CPUs -- speed up our experiments quite a bit
+  32 Intel (Skylake) CPUs --- speed up our experiments quite a bit
   (nearly linear thanks to GNU parallel)
 \item
-  64 Gb RAM -- shouldn't be critical to the experiment, but the more
+  64 Gb RAM --- shouldn't be critical to the experiment, but the more
   CPUs you have the more memory you need (our 32 CPUs consumed 15 Gb at
   some point)
 \item
-  1.5 Tb disk space -- same as RAM, shouldn't be critical but be sure to
+  1.5 Tb disk space --- same as RAM, shouldn't be critical but be sure to
   provision several Gb per processor.
 \end{itemize}
 
