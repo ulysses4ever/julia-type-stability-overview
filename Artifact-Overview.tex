@@ -1,0 +1,474 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\author{}
+\date{}
+
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\begin{document}
+
+\hypertarget{getting-started}{%
+\subsection{Getting Started}\label{getting-started}}
+
+We show here the simplest way to (dry) run the artifact, which is via
+\href{https://docs.docker.com/get-docker/}{Docker}. The alternatives are
+explained in the
+\protect\hyperlink{comments-on-setting-up-environment}{comments to
+setting up the environment}. Every step shouldn't take longer than 5
+minutes.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Extract the artifact tarball somewhere on the disk, and open a shell
+  session in the root directory. The \texttt{ls} (accordingly,
+  \texttt{dir} on Windows) should show you:
+
+\begin{verbatim}
+Stability    pkgs    start    README.md    shell.nix    top-1000-pkgs.txt
+\end{verbatim}
+\item
+  From here, run Docker as follows:
+
+\begin{verbatim}
+docker run --rm -it -v "$PWD":/artifact nixos/nix sh -c "cd artifact; nix-shell --pure"
+\end{verbatim}
+
+  Note: running Docker may require root privileges. Other notes from the
+  \protect\hyperlink{steps-to-setup}{Steps To Setup} section also apply.
+\item
+  Make sure (e.g.~with \texttt{ls}) that you are in the artifact root
+  (e.g.~\texttt{ls} shows the \texttt{Stability} directory among
+  others). Pull in dependencies of our code:
+
+\begin{verbatim}
+JULIA_PROJECT=Stability julia -e 'using Pkg; Pkg.instantiate()'
+\end{verbatim}
+\item
+  To run our type stability analysis on one simple Julia package
+  \texttt{Multisets}, do the following:
+
+  \begin{enumerate}
+  \def\labelenumii{\alph{enumii}.}
+  \item
+    Enter \texttt{start} directory and process the package:
+
+\begin{verbatim}
+cd start
+../Stability/scripts/proc_package.sh "Multisets 0.4.12"
+\end{verbatim}
+
+    There should be a number of new files with raw data in
+    \texttt{start/Multisets},
+    e.g.~\texttt{stability-stats-per-instance.csv}.
+  \item
+    Convert the raw data into a CSV file:
+
+\begin{verbatim}
+../Stability/scripts/pkgs-report.sh
+\end{verbatim}
+
+    There should be a new file \texttt{start/report.csv}.
+  \item
+    Generate tables:
+
+\begin{verbatim}
+JULIA_PROJECT=../Stability ../Stability/scripts/tables.jl
+\end{verbatim}
+
+    You should see stability data about the Multisets package as an
+    output:
+
+\begin{verbatim}
+ Table 1
+ 3×3 DataFrame
+  Row │ Stats      Stable   Grounded 
+      │ String     Float64  Float64  
+ ─────┼──────────────────────────────
+    1 │ Mean          73.0      55.0
+    2 │ Median        73.0      55.0
+    3 │ Std. Dev.      0.0       0.0
+
+ Table 2
+ 1×7 DataFrame
+  Row │ package    Methods  Instances  Inst/Meth  Varargs (%)  Stable (%)  Grounded (%) 
+      │ String     Int64    Int64      Float64    Int64        Int64       Int64        
+ ─────┼─────────────────────────────────────────────────────────────────────────────────
+    1 │ Multisets        7         11        1.6            0          73            55
+\end{verbatim}
+
+    Note that the format is the same as Tables 1 and 2 of the paper,
+    only the numbers are computed over one small package.
+  \item
+    Generate plots:
+
+\begin{verbatim}
+JULIA_PROJECT=../Stability julia -L ../Stability/scripts/plot.jl -e 'plot_pkg("Multisets")'
+\end{verbatim}
+
+    There should be a group of figures created under
+    \texttt{Multisets/figs}. The ones that correspond to Figure 10 of
+    the paper are
+
+\begin{verbatim}
+Multisets/figs/Multisets-size-vs-stable.pdf
+Multisets/figs/Multisets-size-vs-grounded.pdf
+\end{verbatim}
+
+    You should be able to browse the figures using your host system's
+    PDF viewer (all files created inside Docker container under the
+    \texttt{/artifact} directory will be visible in your host file
+    system).\\
+    The figures should be similar to ones in
+    \texttt{start/Multisets/figs-ref}.
+  \end{enumerate}
+\item
+  To shut down the Docker session, run \texttt{exit}.
+\end{enumerate}
+
+\hypertarget{list-of-claims-from-paper-supported-by-artifact}{%
+\subsection{List of Claims From Paper Supported by
+Artifact}\label{list-of-claims-from-paper-supported-by-artifact}}
+
+This artifact aims for two things:
+
+\begin{itemize}
+\item
+  give exact directions on how to reproduce experiments reported in
+  Section 5 (Empirical Study) of the Type Stability in Julia paper
+  submitted to OOPSLA '21; in particular:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Table 1,
+  \item
+    Table 2,
+  \item
+    Figure 10;
+  \end{itemize}
+\item
+  show how to get stability metrics for Julia code (be it a function,
+  module or package) using our framework in the interactive mode -- this
+  supports the claim from Section 5.4 that the framework ``can be
+  employed by package developers to study where in their code
+  instability concentrates, as well as check for regressions''.
+\end{itemize}
+
+\hypertarget{step-by-step-instructions}{%
+\subsection{Step By Step Instructions}\label{step-by-step-instructions}}
+
+There are four parts to the rest of this document:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Metadata about our artifact and experiment as suggested by AEC
+  Guidelines.
+\item
+  Discussion of environment setup.
+\item
+  Reproducing results from Section 5 of the paper.
+\item
+  Some examples of interactive usage.
+\end{enumerate}
+
+\hypertarget{metadata}{%
+\subsubsection{Metadata}\label{metadata}}
+
+\hypertarget{hardware-and-timings}{%
+\paragraph{Hardware and Timings}\label{hardware-and-timings}}
+
+AEC guidelines suggest adding approximate timings for all operations.
+
+First, our hardware specs. We run experiments in a virtualized
+environment on server hardware:
+
+\begin{itemize}
+\item
+  32 Intel (Skylake) CPUs -- speed up our experiments quite a bit
+  (nearly linear thanks to GNU parallel)
+\item
+  64 Gb RAM -- shouldn't be critical to the experiment, but the more
+  CPUs you have the more memory you need (our 32 CPUs consumed 15 Gb at
+  some point)
+\item
+  1.5 Tb disk space -- same as RAM, shouldn't be critical but be sure to
+  provision several Gb per processor.
+\end{itemize}
+
+Using that hardware we get:
+
+\begin{itemize}
+\tightlist
+\item
+  Reproducing Table 1 (1K packages): 7 hrs
+\item
+  Reproducing Table 2 (10 packages): 20 mins
+\item
+  Reproducing Fig. 10 (heat maps): TODO (\textless{} 5 minutes?)
+\end{itemize}
+
+These numbers, again, are heavily dependent on the number of CPUs
+available on the system.
+
+\hypertarget{expected-warnings}{%
+\paragraph{Expected Warnings}\label{expected-warnings}}
+
+AEC guidelines suggest mentioning expected warnings in the README.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  During package analysis (e.g.~reproducing Tables 1 and 2) Julia warns
+  about us overriding its test-suite functionality. This is fine because
+  that appeared to be the most convenient way of gathering statistics we
+  need.
+
+\begin{verbatim}
+WARNING: Method definition gen_test_code##kw(Any, typeof(Pkg.Operations.gen_test_code), String) in module Operations at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.5/Pkg/src/Operations.jl:1316 overwritten in module Stability at /home/artem/stability/repo/Stability/src/pkg-test-override.jl:6.
+  ** incremental compilation may be fatally broken for this module **
+\end{verbatim}
+\item
+  GNU parallel wants to be cited and prints the following message unless
+  you run it dry with the \texttt{-\/-citation} flag first. It is safe
+  to ignore.
+
+\begin{verbatim}
+Academic tradition requires you to cite works you base your article on.
+If you use programs that use GNU Parallel to process data for an article
+...
+Come on: You have run parallel 13 times. Isn't it about time 
+you run 'parallel --citation' once to silence the citation notice?
+\end{verbatim}
+\item
+  The main body of the experiment for Tables 1 and 2 uses Julia Package
+  manager to get and run tests of various Julia packages. The package
+  manager as well as test suites are rather verbose so expect a lot of
+  text on the screen. Some tests will fail, but this is expected: the
+  idea is that no matter what the outcome of test is, some Julia code
+  will be compiled during the test, and this code we can analyze anyway.
+
+  Some test suites among 1000 packages considered will fail fatally for
+  various reasons (usually, dependencies-related). As noted in the
+  paper, Section 5.1 (Methodology) we had over seven hundred test suites
+  produced results that we could analyze.
+\end{enumerate}
+
+\hypertarget{comments-on-setting-up-environment}{%
+\subsubsection{Comments on Setting Up
+Environment}\label{comments-on-setting-up-environment}}
+
+Our artifact has modest dependencies and in theory can be tested by
+manually installing them, but, of course, we provide two other essential
+pieces of infrastructure: a) automatic dependency management (via the
+Nix package manager), b) isolation from the host system (via Docker).
+Still, both of these pieces are optional.
+
+We first expand a little more on the setup and then provide the sequence
+of steps that get you there.
+
+\hypertarget{dependencies}{%
+\paragraph{Dependencies}\label{dependencies}}
+
+\begin{itemize}
+\item
+  Bash shell
+\item
+  Julia v1.5.4
+\item
+  GNU parallel
+\item
+  \texttt{timeout} from GNU coreutils
+\end{itemize}
+
+\hypertarget{dependency-management-via-nix-and-reproducibility}{%
+\paragraph{Dependency Management via Nix and
+Reproducibility}\label{dependency-management-via-nix-and-reproducibility}}
+
+To make sure the version of dependencies are the same as we used, and
+also to automate the process of getting them, we use the
+\href{https://nixos.org/manual/nix/stable/\#chap-introduction}{Nix
+package manager} -- a general package manager
+\href{https://nixos.org/guides/install-nix.html}{available} on Linux,
+MacOS and Windows (via WSL).
+
+The \texttt{shell.nix} file in the root of the artifact describes the
+dependencies we have. If the user has Nix installed and don't need
+isolation (e.g.~believes that we don't \texttt{rm\ -rf} their home
+directory), they can use it directly without Docker and can skip the
+next section.
+
+There is another kind of dependencies, though -- the analyzed Julia
+packages, which are not covered by Nix or any other (known to us)
+general package manager. To get those we use the Julia package manager
+\texttt{Pkg} (part of the Julia dependency). To make the figures from
+the paper as close as possible during the experiment, we supply the
+metadata about versions of the packages we analyzed. These metadata are
+stored in \texttt{pkgs} and \texttt{start} directories of the artifact.
+They have a set of subdirectories named after particular packages we
+analyzed, and every package subdirectory contains two files related to
+\texttt{Pkg}: \texttt{Project.toml} and \texttt{Manifest.toml}.
+Supplying these ensures that reproduction use the same versions of
+packages as we did, but it does not guarantee 100\% reproducibility of
+numbers because test suites of some analyzed packages contain
+non-determinism (naturally).
+
+\hypertarget{isolation-plus-nix-dependency-via-docker}{%
+\paragraph{Isolation Plus Nix Dependency via
+Docker}\label{isolation-plus-nix-dependency-via-docker}}
+
+We suggest using Docker to avoid unexpected interactions with the host
+system. This also gets you Nix. In theory, you could use a Docker image
+without Nix and get all dependencies there manually, or we could supply
+a custom Docker image with them (this would cost several hundreds
+megabytes in the artifact's real estate). But we don't discuss these
+configurations because Docker+Nix seems like a strictly better option.
+
+Note that insider Docker the commands are run under the root user. This
+makes life easier in one aspect: Julia package manager stores a lot of
+metadata and makes some of it inaccessible for cleanup in the end. This
+is no problem under reoot but if running ouside Docker and without root
+privileges, this will eat up some disk space, proportional to the number
+of packages analyzed. For 1000 packages this can add up to hundreds of
+gigabytes. If you don't have that much disc space, run either in Docker
+or under root.
+
+\hypertarget{steps-to-setup}{%
+\paragraph{Steps To Setup}\label{steps-to-setup}}
+
+We mark the first two steps as optional but the simplest and most likely
+to succeed path is to apply both of them.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  {[}Optional, apply if Isolation is desired{]}\\
+  Start a Docker container with Nix installed by executing the following
+  in the root directory of the artifact:
+
+  \texttt{docker\ run\ -\/-rm\ -it\ -v\ "\$PWD":/artifact\ nixos/nix\ sh\ -c\ "cd\ artifact"}
+
+  Note 1: running the \texttt{docker} command may require root
+  privileges on your system. We assume that you know how to use Docker
+  on your system.
+
+  Note 2: \texttt{"\$PWD"} expands to the path of the current directory
+  in most shells. You can check it with \texttt{echo\ "\$PWD"}. If not,
+  please use equivalent command for your shell or type in the path
+  manually.
+
+  Note 3 for Windows and MacOS users: note that Docker is sometimes
+  reported to be slow with file operations concerning bind mounts
+  (that's the \texttt{-v} flag) on these platforms. If you happen to use
+  them and want to reproduce the experiment on 1000 packages, you may be
+  better off with applying this manual inside a virtual machine with
+  some Linux installation. Getting a Linux VM is not covered here
+  because it's assumed to be a common knowledge by now.
+\item
+  {[}Optional, apply if Dependency Management is desired{]}\\
+  Make sure the artifact files are in the current directory in your
+  shell session (e.g.~by executing \texttt{ls} in the shell). From
+  there, enter the Nix shell by executing \texttt{nix-shell\ -\/-pure}.
+  Nix shell is a Bash shell that has all the dependencies specified in
+  \texttt{shell.nix} visible (i.e.~in \texttt{\$PATH}).
+\item
+  {[}Sanity Checking{]} Make sure you have Julia and GNU parallel up:
+  \texttt{julia\ -\/-version\ \&\&\ parallel\ -\/-version}.
+\end{enumerate}
+
+\hypertarget{reproducing-results-from-section-5}{%
+\subsubsection{Reproducing Results from Section
+5}\label{reproducing-results-from-section-5}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Table 2 (The 10-packages table from Section 5):
+
+  \begin{itemize}
+  \tightlist
+  \item
+    the package list (TODO either a separate file or the 1K list +
+    enhance \texttt{proc\_package\_parallel.sh} with additional param:
+    how many packages to take)
+  \item
+    \texttt{scripts/proc\_package\_parallel.sh\ ../top-10.txt}
+  \item
+    \texttt{scripts/pkgs-report.sh}
+  \end{itemize}
+
+  Output is in \texttt{report.csv} which is still not quite close to
+  Table 2, as it needs:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Percentages (instead of absolute numbers) for
+    stable/grounded/varargs columns
+  \item
+    Remove nospec and (maybe?) fail column
+  \item
+    Add calculated instance per method column.
+  \end{itemize}
+\item
+  Table 1 of Sec 5 (data about 1K packages).
+
+  This should be similar to previous:
+  \texttt{proc\_package\_parallel.sh}.
+\item
+  Fig. 10 (st/gr heat map from Sec 5)
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \texttt{scripts/plot.sh} ??? (TODO)
+  \end{itemize}
+\end{enumerate}
+
+\end{document}
