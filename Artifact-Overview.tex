@@ -7,10 +7,17 @@
 \author{}
 \date{}
 
+\renewcommand{\topfraction}{1} %default: 0.7
+\renewcommand{\bottomfraction}{1} %default: 0.3
+\renewcommand{\textfraction}{0.1} %default: 0.2
+\renewcommand{\floatpagefraction}{1} %default: 0.6
+
+\usepackage{fontspec}
+\setmainfont{Liberation Serif}
+\setmonofont{Inconsolata}
 \usepackage{amsmath,amssymb}
 \usepackage{verbatimbox}
 \usepackage{fullpage}
-\usepackage{lmodern}
 \usepackage{iftex}
 \ifPDFTeX
   \usepackage[T1]{fontenc}
@@ -209,6 +216,43 @@ This artifact aims for two things:
   instability concentrates, as well as check for regressions''.
 \end{itemize}
 
+\section{Contents of Artifact}
+
+Figure 1 describes the contents of our artifact. Some of the scripts and source files
+have instructional comments inside.
+
+\begin{figure}[ht]
+\label{fig:contents}
+\begin{verbnobox}[\small]
+├── shell.nix - system dependencies via Nix
+├── Stability - our Julia package to analyze type stability
+│  ├── Manifest.toml - machine description of our Julia package (1)
+│  ├── Project.toml  - machine description of our Juila package (2)
+│  ├── scripts
+│  │  ├── proc_package.sh - run stability analysis on one package (produce raw analysis data)
+│  │  ├── proc_package_parallel.sh - run stability analysis on several packages (batch mode)
+│  │  ├── plot.jl - using raw data generate figures like Figure 10
+│  │  ├── pkgs-report.sh - using raw data generate aggregate report (report.csv)
+│  │  └── tables.jl - using report.csv render Tables 1 and 2 of the paper
+│  ├── src
+│  │  ├── pkg-test-override.jl - override Julia's test suite functionality to hook in our analysis
+│  │  └── Stability.jl - code analyzing type stability
+│  ├── startup.jl - convenience script to start Julia with our package loaded (1)
+│  └── startup.sh - convenience script to start Julia with our package loaded (2)
+├── pkgs
+│  ├── ... - 1000 packages with descriptions ({Project, Manifest}.toml) and raw data precomputed
+│  └── report.csv - report on 1000 packages used to generate tables and figures in the paper
+├── start
+│  └── Multisets - example package for the Getting Started phase
+│     ├── figs-ref - reference figures for the Getting Started phase
+│     ├── Manifest.toml - machine description of the package (1)
+│     └── Project.toml - machine description of the package (2)
+├── top-1000-pkgs.txt - list of 1000 most-starred Julia project
+└── Overview.pdf - this file
+\end{verbnobox}
+\caption{Contents of Artifact}
+\end{figure}
+
 \hypertarget{step-by-step-instructions}{%
 \section{Step By Step Instructions}\label{step-by-step-instructions}}
 
@@ -326,7 +370,7 @@ Still, both of these pieces are optional.
 you, it's not necessary to follow this section.}
 
 We first expand a little more on the setup and then provide the sequence
-of steps that get you to the right environment.
+of steps that get you in the right environment.
 
 \hypertarget{dependencies}{%
 \paragraph{Dependencies}\label{dependencies}}
@@ -468,7 +512,7 @@ Comments on Setup section above.
 
 \begin{verbnobox}[\small]
 cd pkgs
-../Stability/scripts/proc_package_parallel.sh top-1000-pkgs.txt 10
+../Stability/scripts/proc_package_parallel.sh ../top-1000-pkgs.txt 10
 \end{verbnobox}
 
     This takes 20 minutes in our fully parallel setup (\# CPUs \textgreater{}
@@ -508,5 +552,8 @@ Pluto/figs/Pluto-size-vs-grounded.pdf
 
 \end{enumerate}
 
+Step 1 can be adjusted to run either on the whole 1000-packages set by omitting
+the $10$ argument to \texttt{proc\_package\_parallel.sh} or to run on first
+$n$ packages by replacing $10$ with $n$.
 
 \end{document}
