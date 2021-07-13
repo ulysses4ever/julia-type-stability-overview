@@ -77,11 +77,9 @@ Stability    pkgs    start    Overview.pdf    shell.nix    top-1000-pkgs.txt
 \item
   From here, run Docker as follows:
 
-{\small
 \begin{verbnobox}[\small]
 docker run --rm -it -v "$PWD":/artifact nixos/nix sh -c "cd artifact; nix-shell --pure"
 \end{verbnobox}
-}
 
   Note: running Docker may require root privileges. Other notes from the
   \protect\hyperlink{steps-to-setup}{Steps To Setup} section also apply.
@@ -258,7 +256,7 @@ Using that hardware we get:
 \begin{itemize}
 \tightlist
 \item
-  Reproducing Table 1 (1K packages): 7 hrs
+  Reproducing Table 1 (1000 packages): 7 hrs
 \item
   Reproducing Table 2 (10 packages): 20 mins
 \item
@@ -302,29 +300,33 @@ you run 'parallel --citation' once to silence the citation notice?
 \item
   The main body of the experiment for Tables 1 and 2 uses Julia Package
   manager to get and run tests of various Julia packages. The package
-  manager as well as test suites are rather verbose so expect a lot of
+  manager as well as test suites are rather verbose, so expect a lot of
   text on the screen. Some tests will fail, but this is expected: the
-  idea is that no matter what the outcome of test is, some Julia code
-  will be compiled during the test, and this code we can analyze anyway.
+  idea is that no matter what the outcome of the test is, some Julia code
+  will be compiled during the test, and that is the code that we analyze.
 
-  Some test suites among 1000 packages considered will fail fatally for
+  Some test suites among the 1000 packages in our data set will fail fatally for
   various reasons (usually, dependencies-related). As noted in the
-  paper, Section 5.1 (Methodology) we had over seven hundred test suites
-  produced results that we could analyze.
+  paper, Section 5.1 (Methodology), out of the 1000, over seven hundred test
+  suites do produce results that we can analyze.
 \end{enumerate}
 
 \hypertarget{comments-on-setting-up-environment}{%
 \subsection{Comments on Setting Up
 Environment}\label{comments-on-setting-up-environment}}
 
-Our artifact has modest dependencies and in theory can be tested by
-manually installing them, but, of course, we provide two other essential
+Our artifact has modest dependencies, and it should be possible to
+manually install them on a different machine; however, it is not necessary
+to do so because we provide two other essential
 pieces of infrastructure: a) automatic dependency management (via the
 Nix package manager), b) isolation from the host system (via Docker).
 Still, both of these pieces are optional.
 
+\textit{Note: if the Docker approach from Getting Started section works good for
+you, it's not necessary to follow this section.}
+
 We first expand a little more on the setup and then provide the sequence
-of steps that get you there.
+of steps that get you to the right environment.
 
 \hypertarget{dependencies}{%
 \paragraph{Dependencies}\label{dependencies}}
@@ -344,10 +346,7 @@ of steps that get you there.
 \paragraph{Dependency Management via Nix and
 Reproducibility}\label{dependency-management-via-nix-and-reproducibility}}
 
-\textit{Note: if the Docker approach from Getting Started section works good for
-you, you don't have to understand this section.}
-
-To make sure the version of dependencies are the same as we used, and
+To make sure the versions of dependencies are the same as we used, and
 also to automate the process of getting them, we use the
 \href{https://nixos.org/manual/nix/stable/\#chap-introduction}{Nix
 package manager} -- a general package manager
@@ -355,24 +354,24 @@ package manager} -- a general package manager
 MacOS and Windows (via WSL).
 
 The \texttt{shell.nix} file in the root of the artifact describes the
-dependencies we have. If the user has Nix installed and don't need
+dependencies we have. If the user has Nix installed and doesn't need
 isolation (e.g.~believes that we don't \texttt{rm\ -rf} their home
-directory), they can use it directly without Docker and can skip the
-next section.
+directory), they can use it directly without Docker and skip the
+section on Docker.
 
-There is another kind of dependencies, though -- the analyzed Julia
+There is another kind of dependencies, though: the analyzed Julia
 packages, which are not covered by Nix or any other (known to us)
-general package manager. To get those we use the Julia package manager
-\texttt{Pkg} (part of the Julia dependency). To make the figures from
+general package manager. To get those, we use the Julia package manager
+\texttt{Pkg} (part of the Julia dependency). To generate figures from
 the paper as close as possible during the experiment, we supply the
 metadata about versions of the packages we analyzed. These metadata are
 stored in \texttt{pkgs} and \texttt{start} directories of the artifact.
 They have a set of subdirectories named after particular packages we
 analyzed, and every package subdirectory contains two files related to
 \texttt{Pkg}: \texttt{Project.toml} and \texttt{Manifest.toml}.
-Supplying these ensures that reproduction use the same versions of
-packages as we did, but it does not guarantee 100\% reproducibility of
-numbers because test suites of some analyzed packages contain
+Supplying these ensures that you will run the analysis on the same versions of
+the packages as we did, but it does not guarantee 100\% reproducibility of
+the reported numbers because test suites of some analyzed packages contain
 non-determinism (naturally).
 
 \hypertarget{isolation-plus-nix-dependency-via-docker}{%
@@ -381,12 +380,12 @@ Docker}\label{isolation-plus-nix-dependency-via-docker}}
 
 We suggest using Docker to avoid unexpected interactions with the host
 system. This also gets you Nix. In theory, you could use a Docker image
-without Nix and get all dependencies there manually, or we could supply
+without Nix and get all the dependencies there manually, or we could supply
 a custom Docker image with them (this would cost several hundreds
 megabytes in the artifact's real estate). But we don't discuss these
 configurations because Docker+Nix seems like a strictly better option.
 
-Note that insider Docker the commands are run under the root user. This
+Note that insider Docker, the commands are run under the root user. This
 makes life easier in one aspect: Julia package manager stores a lot of
 metadata and makes some of it inaccessible for cleanup in the end. This
 is no problem under reboot but if running outside Docker and without root
@@ -398,8 +397,10 @@ or under root.
 \hypertarget{steps-to-setup}{%
 \paragraph{Steps To Setup}\label{steps-to-setup}}
 
-We mark the first two steps as optional but the simplest and most likely
-to succeed path is to apply both of them.
+We mark the first two steps as optional, but the simplest and most-likely-to-succeed
+path is to apply both of them.
+Alternatively, you can manually install the dependencies listed at the beginning
+of this section, open artifact root in the shell, and go to step 3.
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -423,9 +424,9 @@ to succeed path is to apply both of them.
   reported to be slow with file operations concerning bind mounts
   (that's the \texttt{-v} flag) on these platforms. If you happen to use
   them and want to reproduce the experiment on 1000 packages, you may be
-  better off with applying this manual inside a virtual machine with
+  better off with applying this manually inside a virtual machine with
   some Linux installation. Getting a Linux VM is not covered here
-  because it's assumed to be a common knowledge by now.
+  because it's assumed to be a common knowledge.
 \item
   {[}Optional, apply if Dependency Management is desired{]}\\
   Make sure the artifact files are in the current directory in your
@@ -436,6 +437,8 @@ to succeed path is to apply both of them.
 \item
   {[}Sanity Checking{]} Make sure you have Julia and GNU parallel up:
   \texttt{julia\ -\/-version\ \&\&\ parallel\ -\/-version}.
+  Current directory should be artifact's root (e.g. \texttt{ls} should show
+  Stability directory, shell.nix file, etc.).
 \item
   Pull in dependencies of our Julia code:
 
@@ -451,16 +454,16 @@ JULIA_PROJECT=Stability julia -e 'using Pkg; Pkg.instantiate()'
 As noted in the Timings section, reproducing Table 1 requires a lot of
 computational resources to analyze 1000 Julia packages. We suggest starting
 from only top 10 packages, which also provide data for Table 2. In the end of
-the section we show what you need to change to get all 1000 packages processed.
+this section, we show how to process all 1000 packages (or less).
 
-Instructions below assume the environment is setup, e.g. by applying the first 3
+Instructions below assume the environment is set up, e.g. by applying the first 3
 steps from the Getting Started section or following the discussion in the
 Comments on Setup section above.
 
 \begin{enumerate}
   \def\labelenumii{\alph{enumii}.}
   \item
-    Enter the \texttt{pkgs} directory in the root of the artifact and run analysis
+    Enter the \texttt{pkgs} directory in the root of the artifact and run the analysis
     on 10 packages:
 
 \begin{verbnobox}[\small]
@@ -469,8 +472,8 @@ cd pkgs
 \end{verbnobox}
 
     This takes 20 minutes in our fully parallel setup (\# CPUs \textgreater{}
-    10). This script runs the analysis producing the raw data per package and
-    also runs the reporting script achieving a moral equivalent of steps 4.a and
+    10). This script (1) runs the analysis producing the raw data per package, and
+    (2) runs the reporting script; this is equivalent is steps 4.a and
     4.b from the Getting Started section. The resulting \texttt{report.csv}
     in the current directory should get a new time stamp.
 
