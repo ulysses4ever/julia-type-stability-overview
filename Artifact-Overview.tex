@@ -191,35 +191,31 @@ Multisets/figs/Multisets-size-vs-grounded.pdf
 \section{List of Claims From Paper Supported by
 Artifact}\label{list-of-claims-from-paper-supported-by-artifact}}
 
-This artifact aims for two things:
-
-\begin{itemize}
-\item
-  give exact directions on how to reproduce experiments reported in
-  Section 5 (Empirical Study) of the Type Stability in Julia paper
-  submitted to OOPSLA '21; in particular:
-
+This artifact aims to give exact directions on how to reproduce experiments reported in
+Section 5 (Empirical Study) of the Type Stability in Julia paper
+submitted to OOPSLA '21; in particular:
   \begin{itemize}
-  \tightlist
   \item
     Table 1,
   \item
     Table 2,
   \item
-    Figure 10;
+    Figure 10.
   \end{itemize}
-\item
-  show how to get stability metrics for Julia code (be it a function,
-  module or package) using our framework in the interactive mode -- this
-  supports the claim from Section 5.4 that the framework ``can be
-  employed by package developers to study where in their code
-  instability concentrates, as well as check for regressions''.
-\end{itemize}
 
 \section{Contents of Artifact}
 
 Figure 1 describes the contents of our artifact. Some of the scripts and source files
-have instructional comments inside.
+have instructional comments inside. We submit the Git history of the project:
+the submitted version lives on the \texttt{artifact} branch. The same repository
+is available on Github
+({\color{blue}\href{https://github.com/ulysses4ever/julia-type-stability}{ulysses4ever/julia-type-stability}})
+but without the \texttt{pkgs} directory: this directory contains data
+about the exact Julia package versions we used to compute statistics, and also
+the full raw data produced by our analysis, which you can use to build the final
+tables without having to run the experiment on all 1000 packages. This directory
+takes 1.6 Gb space when uncompressed, the rest of the artifact fits into several
+megabytes including the Git history.
 
 \begin{figure}[ht]
 \label{fig:contents}
@@ -248,7 +244,9 @@ have instructional comments inside.
 │     ├── Manifest.toml - machine description of the package (1)
 │     └── Project.toml - machine description of the package (2)
 ├── top-1000-pkgs.txt - list of 1000 most-starred Julia project
-└── Overview.pdf - this file
+├── Overview.pdf - this file
+├── .git - Git history of this project
+└── .gitignore - we ignore the pkgs directory (see above)
 \end{verbnobox}
 \caption{Contents of Artifact}
 \end{figure}
@@ -256,7 +254,7 @@ have instructional comments inside.
 \hypertarget{step-by-step-instructions}{%
 \section{Step By Step Instructions}\label{step-by-step-instructions}}
 
-There are four parts to the rest of this document:
+There are three parts to the rest of this document:
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -267,8 +265,6 @@ There are four parts to the rest of this document:
   Discussion of environment setup.
 \item
   Reproducing results from Section 5 of the paper.
-\item
-  Some examples of interactive usage.
 \end{enumerate}
 
 \hypertarget{metadata}{%
